@@ -51,7 +51,6 @@ sub _new {
 
     say STDERR "created $id";
     _print("$dir/title", join(" ", @_) . "\n");
-    _tag($id, "by:$ENV{USER}");
     _editor("$dir/details");
 }
 
@@ -227,7 +226,7 @@ sub id_dir {
 
 sub _editor {
     unless (-f $_[0]) {
-        _print($_[0], "# Delete this line and enter your text here, then save and exit the editor.\n");
+        _print($_[0], "# by: $ENV{USER}\n");
     }
 
     my $editor = "vi";
