@@ -1,0 +1,313 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+use 5.10.0;
+use IPC::Cmd qw[can_run run run_forked];
+use File::Path qw(make_path);
+use Data::Dumper;
+
+# use Time::HiRes qw(sleep);
+# use POSIX ":sys_wait_h";
+
+# ----------------------------------------------------------------------
+# constants, globals, and option handling
+
+my %dispatch = (
+    new     =>  \&_new,
+    tag     =>  \&_tag,
+    tags    =>  \&_tags,
+    log     =>  \&_log,
+    list    =>  \&_list,
+    show    =>  \&_show,
+    hist    =>  \&_history,
+    history =>  \&_history,
+    close   =>  \&_close,
+    edit    =>  \&_edit,
+    sync    =>  \&_sync,
+);
+
+usage() unless @ARGV;
+my $cmd = shift;
+usage() if $cmd eq '-h' or $cmd eq 'help';
+die "Invalid command; run with '-h' to see usage" unless $dispatch{$cmd};
+
+chdir "$ENV{HOME}/.notes-tracker";
+
+# ----------------------------------------------------------------------
+# main
+
+$dispatch{$cmd}->(@ARGV);
+
+exit 0;
+
+# ----------------------------------------------------------------------
+# subcomands
+sub _new {
+    die "'new' needs a 'title'\n" unless @_;
+    my $id = new_id();
+    my $dir = Y() . "/$id";
+    make_path( "$dir/tags" );
+
+    say STDERR "created $id";
+    _print("$dir/title", join(" ", @_) . "\n");
+    _tag($id, "by:$ENV{USER}");
+    _editor("$dir/details");
+}
+
+sub _tag {
+    die "this command needs an ID\n" unless @_;
+    my ($id, $dir) = id_dir(+shift());
+
+    my $tag = shift;
+    die "bad tag '$tag', please keep tags as simple words\n" if $tag =~ /[^\w@.:-]/;
+    if ($tag =~ s/^-//) {
+        unlink "$dir/tags/$tag";
+    } else {
+        _print("$dir/tags/$tag", "");    # "touch" file (no content; just filename)
+    }
+}
+
+sub _tags {
+    system("find . -name .git -prune -o -type d -name tags -print | xargs -l1 ls | sort -u");
+}
+
+sub _log {
+    die "this command needs an ID\n" unless @_;
+    my ($id, $dir) = id_dir(+shift());
+    die "'log' needs some text to log!\n" unless @_;
+    dated_print("$dir/log", join(" ", @_));
+}
+
+sub _list {
+    @_ = qw(-closed) unless @_;
+
+    my @IDs = get_IDs(@_);
+    for my $id (sort @IDs) {
+        my $dir;
+        ($id, $dir) = id_dir($id);
+        my $taglist = join(", ", map { s(.*/)(); $_ } sort glob("$dir/tags/*"));
+        printf "%s | %-22s | %s", $id, $taglist, slurp("$dir/title");
+    }
+}
+
+sub get_IDs {
+    my @IDs;
+    if ($_[0] =~ s(^/)()) {
+        die "invalid syntax; please run with '-h' for usage!\n" if @_ > 1;
+        my $regex = shift;
+        if ($regex =~ s(^/)()) {
+            @IDs = `find . -name .git -prune -o -type f -print | xargs egrep -l -i '$regex' | cut -f3 -d/ | sort -u`;
+        } else {
+            @IDs = `find . -name .git -prune -o -type f -name title -print | xargs egrep -l -i '$regex' | cut -f3 -d/`;
+        }
+        chomp(@IDs);
+    } else {
+        # it's one or more tags, perhaps with a "-" in front of some
+
+        my %set;
+        # start with ALL ids in the set, even those that don't have a tag
+        map {
+            s(.*/)(); chomp; $set{$_} = 1
+        } grep {
+            m(/\d\d\d\d/)
+        } `find . -name .git -prune -o -type d -print | grep -v tags`;
+
+        # now get all the filenames under "tags"
+        my $tags = `find . -name .git -prune -o -type f -print | grep /tags/`;
+
+        # now process each tag in our selection list
+        for my $tag (@_) {
+            if ($tag =~ s/^-//) {
+                map {
+                    delete $set{$_} if $tags =~ m(/$_/tags/$tag$)m
+                } sort keys %set;
+            } else {
+                map {
+                    delete $set{$_} unless $tags =~ m(/$_/tags/$tag$)m
+                } sort keys %set;
+            }
+        }
+        @IDs = grep { $set{$_} } keys %set;
+    }
+
+    return @IDs;
+}
+
+sub _show {
+    die "this command needs an ID\n" unless @_;
+    my ($id, $dir) = id_dir(+shift());
+
+    my $taglist = join(", ", map { s(.*/)(); $_ } sort glob("$dir/tags/*"));
+    printf "title:\t%stags:\t%s\nid:\t%s\n\n", slurp("$dir/title"), $taglist, $id;
+    printf slurp("$dir/details");
+    print "\n";
+    printf slurp("$dir/log") if -f "$dir/log";
+}
+
+sub _history {
+    die "unlike 'list', 'hist' *requires* a search term (/regex, //regex, or list of tags\n" unless @_;
+
+    my @IDs = get_IDs(@_);
+    for my $id (sort @IDs) {
+        my $dir;
+        ($id, $dir) = id_dir($id);
+        my $taglist = join(", ", map { s(.*/)(); $_ } sort glob("$dir/tags/*"));
+        printf "%s | %-22s | %s", $id, $taglist, slurp("$dir/title");
+        printf slurp("$dir/log") if -f "$dir/log";
+        print "\n";
+    }
+}
+
+sub _close {
+    die "this command needs an ID\n" unless @_;
+    my ($id, $dir) = id_dir(+shift());
+
+    _tag($id, "closed");
+}
+
+sub _edit {
+    die "this command needs an ID\n" unless @_;
+    my ($id, $dir) = id_dir(+shift());
+
+    _editor(map { "$dir/$_" } qw(title details log));
+}
+
+sub _sync {
+    system("git add -A; git commit -m $ENV{USER}; git pull; git push");
+    exit $? >> 8;
+}
+
+# ----------------------------------------------------------------------
+# service routines
+
+sub new_id {
+    `uuidgen -t` =~ /^(........)-(....)-/;
+    my $x = Ymd() . "-$1-$2";
+    return $x;
+}
+
+sub id_dir {
+    # find the id and return (id, dir) tuple
+    my $partial_id = shift;
+
+    if (length($partial_id) == 24) {
+        # it's a full ID
+        $partial_id =~ /^(\d\d\d\d)-/ or die "WHAT?";
+        return ($partial_id, "$1/$partial_id");
+    }
+
+    my $matched = 0;
+    my $dir = '';
+    my $id = '';
+    for my $d (glob("*")) {
+        for my $f (glob("$d/*")) {
+            next unless $f =~ m(^$d/\d\d\d\d-\d\d-\d\d-$partial_id);
+            $matched++;
+            $dir = $d;
+            $id = $f;
+        }
+    }
+
+    die "ID '$partial_id' not found\n" unless $matched;
+    die "ID '$partial_id' had too many matches\n" unless $matched == 1;
+
+    $id =~ s(^\d\d\d\d/)();
+    return ($id, "$dir/$id");
+}
+
+sub _editor {
+    unless (-f $_[0]) {
+        _print($_[0], "# Delete this line and enter your text here, then save and exit the editor.\n");
+    }
+
+    my $editor = "vi";
+    $editor = "vim" if can_run("vim");
+    $editor = $ENV{VISUAL} || $ENV{EDITOR} || $editor;
+
+    system($editor, @_);
+    exit $? >> 8;
+}
+
+sub dated_print {
+    my ($file, $text) = @_;
+    my $old = ''; $old = slurp($file) if -f $file;
+    _print($file, $old . Ymd() . "\t$text\n");
+}
+
+sub _open {
+    open( my $fh, $_[0], $_[1] ) or die "open $_[1] failed: $!\n";
+    return $fh;
+}
+
+sub _print {
+    my ( $file, @text ) = @_;
+    my $fh = _open( ">", "$file" );
+    print $fh @text;
+    close($fh) or die "close $file failed: $! at ", (caller)[1], " line ", (caller)[2], "\n";
+}
+
+sub slurp {
+    local $/ = undef;
+    my $fh = _open( "<", $_[0] );
+    return <$fh>;
+}
+
+sub Y {
+    my ( $s, $m, $h, $D, $M, $Y ) = localtime();
+    return sprintf "%04d", 1900 + $Y;
+}
+sub Ymd {
+    my ( $s, $m, $h, $D, $M, $Y ) = localtime();
+    # return sprintf "%04d-%02d-%02d %02d:%02d:%02d", 1900 + $Y, 1 + $M, $D, $h, $m, $s;
+    return sprintf "%04d-%02d-%02d", 1900 + $Y, 1 + $M, $D;
+}
+
+# ----------------------------------------------------------------------
+# usage
+
+sub usage {
+    say <DATA>;
+    exit 1;
+}
+
+=for notes
+    NOT YET IMPLEMENTED:
+    nt log tag              # chronological log of all items containing tag
+    nt log /regex           # same, but for items where title matches regex
+    nt attach <ID> <file>   # dream on!
+=cut
+
+__DATA__
+
+Manage "notes".  Each "note" has a 1-line "title" file, and free-form
+"details" and "log" files.  Each note also has zero or more "tags".  The
+tag "closed" has a special meaning (which should be obvious).
+
+Usage:
+    nt new <title>          # also opens an editor to take "details"
+    nt tag <ID> <tag>       # add a tag
+    nt tag <ID> -<tag>      # remove a tag (note the "-" sign)
+    nt tags                 # list of all tags ever used in system (to check typos!)
+
+    nt log <ID> <text>      # append text to the "log" file of <ID>
+
+    nt list [tagnames]      # search tags; see notes below for details
+    nt list /regex          # search 'title' (case insensitive)
+    nt list //regex         # same, plus 'details' and 'log' also
+    nt show <ID>            # full details of one specific item
+    nt history <regex|tags> # search terms as for list command, shows title and log
+
+    nt close <ID>           # adds the "closed" tag
+    nt edit <ID>            # opens editor on title, details, and log files
+                            #   !! USE WITH CARE !!
+
+    nt sync                 # add and commit local changes, pull, and push
+
+Notes:
+-   You need not supply the full ID; just the first 2-4 characters after the
+    date should be fine (as much as is needed to establish uniqueness)
+
+-   'nt list' in tag-search mode shows only open items; if you want closed
+    items add the tag 'closed' explicitly.  Multiple tags are OR-ed.  You can
+    prefix a tag with "-" to negate it (e.g. 'nt list foo -bar' shows items
+    that have tag foo but do not have ta bar).
