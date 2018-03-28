@@ -12,6 +12,8 @@ use Data::Dumper;
 # ----------------------------------------------------------------------
 # constants, globals, and option handling
 
+chdir($ENV{PROJECT_TRACKER_DIR} || "$ENV{HOME}/.project-tracker");
+
 my %dispatch = (
     new     =>  \&_new,
     tag     =>  \&_tag,
@@ -31,12 +33,12 @@ my %dispatch = (
 
 # special case for faster searches
 unshift @ARGV, 'list' if $ARGV[0] =~ m(^/);
+# special case for git
+exec(@ARGV) if $ARGV[0] eq 'git';
 
 my $cmd = shift;
 usage() if $cmd eq '-h' or $cmd eq 'help';
 die "Invalid command; run with '-h' to see usage" unless $dispatch{$cmd};
-
-chdir($ENV{PROJECT_TRACKER_DIR} || "$ENV{HOME}/.project-tracker");
 
 # ----------------------------------------------------------------------
 # main
