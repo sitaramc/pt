@@ -79,8 +79,6 @@ sub _log {
 }
 
 sub _list {
-    @_ = qw(-closed) unless @_;
-
     my @IDs = get_IDs(@_);
     for my $id (sort @IDs) {
         my $dir;
@@ -91,9 +89,11 @@ sub _list {
 }
 
 sub get_IDs {
-    my @IDs;
+    my %set;
+    push @_, '-closed' unless grep { $_ eq 'closed' } @_;
+
     if ($_[0] =~ s(^/)()) {
-        die "invalid syntax; please run with '-h' for usage!\n" if @_ > 1;
+        my @IDs;
         my $regex = shift;
         if ($regex =~ s(^/)()) {
             @IDs = `find . -name .git -prune -o -type f -print | xargs egrep -l -i '$regex' | cut -f3 -d/ | sort -u`;
@@ -101,35 +101,36 @@ sub get_IDs {
             @IDs = `find . -name .git -prune -o -type f -name title -print | xargs egrep -l -i '$regex' | cut -f3 -d/`;
         }
         chomp(@IDs);
+        map { $set{$_} = 1 } @IDs;
+        # now you have a starting set for tag filtering
     } else {
-        # it's one or more tags, perhaps with a "-" in front of some
-
-        my %set;
-        # start with ALL ids in the set, even those that don't have a tag
+        # if no regex was given, seed the set with ALL items
         map {
             s(.*/)(); chomp; $set{$_} = 1
         } grep {
             m(/\d\d\d\d/)
         } `find . -name .git -prune -o -type d -print | grep -v tags`;
-
-        # now get all the filenames under "tags"
-        my $tags = `find . -name .git -prune -o -type f -print | grep /tags/`;
-
-        # now process each tag in our selection list
-        for my $tag (@_) {
-            if ($tag =~ s/^-//) {
-                map {
-                    delete $set{$_} if $tags =~ m(/$_/tags/$tag$)m
-                } sort keys %set;
-            } else {
-                map {
-                    delete $set{$_} unless $tags =~ m(/$_/tags/$tag$)m
-                } sort keys %set;
-            }
-        }
-        @IDs = grep { $set{$_} } keys %set;
     }
 
+    # now we have some tags to deal with, or at least '-closed'
+
+    # get all the filenames under "tags"
+    my $tags = `find . -name .git -prune -o -type f -print | grep /tags/`;
+
+    # process each tag in our selection list
+    for my $tag (@_) {
+        if ($tag =~ s/^-//) {
+            map {
+                delete $set{$_} if $tags =~ m(/$_/tags/$tag$)m
+            } sort keys %set;
+        } else {
+            map {
+                delete $set{$_} unless $tags =~ m(/$_/tags/$tag$)m
+            } sort keys %set;
+        }
+    }
+
+    my @IDs = grep { $set{$_} } keys %set;
     return @IDs;
 }
 
