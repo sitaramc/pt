@@ -32,7 +32,7 @@ my %dispatch = (
 @ARGV = qw(list) unless @ARGV;
 
 # special case for faster searches
-unshift @ARGV, 'list' if $ARGV[0] =~ m(^/);
+unshift @ARGV, 'list' if $ARGV[0] =~ m(^[/@]);
 # special case for git
 exec(@ARGV) if $ARGV[0] eq 'git';
 
