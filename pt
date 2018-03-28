@@ -84,6 +84,8 @@ sub _log {
 
 sub _list {
     my @IDs = get_IDs(@_);
+
+    start_pager();
     for my $id (sort @IDs) {
         my $dir;
         ($id, $dir) = id_dir($id);
@@ -142,6 +144,7 @@ sub _show {
     die "this command needs an ID\n" unless @_;
     my ($id, $dir) = id_dir(+shift());
 
+    start_pager();
     my $taglist = join(", ", map { s(.*/)(); $_ } sort glob("$dir/tags/*"));
     printf "title:\t%stags:\t%s\nid:\t%s\n\n", slurp("$dir/title"), $taglist, $id;
     printf slurp("$dir/details");
@@ -162,6 +165,8 @@ sub _history {
     die "unlike 'list', 'hist' *requires* a search term (/regex, //regex, or list of tags\n" unless @_;
 
     my @IDs = get_IDs(@_);
+
+    start_pager();
     for my $id (sort @IDs) {
         my $dir;
         ($id, $dir) = id_dir($id);
@@ -280,8 +285,16 @@ sub Ymd {
 # usage
 
 sub usage {
+    start_pager();
     say <DATA>;
     exit 1;
+}
+
+END { close(STDOUT); }
+sub start_pager {
+    $ENV{LESS} ||= "-F";
+    $ENV{LESS} .= "F" unless $ENV{LESS} =~ /F/;
+    open(STDOUT, "|-", $ENV{PAGER} || "less");
 }
 
 =for notes
