@@ -19,6 +19,7 @@ my %dispatch = (
     log     =>  \&_log,
     list    =>  \&_list,
     show    =>  \&_show,
+    glog    =>  \&_glog,
     hist    =>  \&_history,
     history =>  \&_history,
     close   =>  \&_close,
@@ -142,6 +143,15 @@ sub _show {
     printf slurp("$dir/details");
     print "\n";
     printf slurp("$dir/log") if -f "$dir/log";
+}
+
+sub _glog {
+    die "this command needs an ID\n" unless @_;
+    my ($id, $dir) = id_dir(+shift());
+
+    push @_, $dir;
+    system("echo", "+git", "log", @_);
+    system("git", "log", @_);
 }
 
 sub _history {
