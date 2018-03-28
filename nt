@@ -27,7 +27,7 @@ my %dispatch = (
     sync    =>  \&_sync,
 );
 
-usage() unless @ARGV;
+@ARGV = qw(list) unless @ARGV;
 my $cmd = shift;
 usage() if $cmd eq '-h' or $cmd eq 'help';
 die "Invalid command; run with '-h' to see usage" unless $dispatch{$cmd};
