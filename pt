@@ -174,7 +174,11 @@ sub _history {
         ($id, $dir) = id_dir($id);
         my $taglist = join(", ", map { s(.*/)(); $_ } sort glob("$dir/tags/*"));
         printf "%s | %-22s | %s", $id, $taglist, slurp("$dir/title");
-        printf slurp("$dir/log") if -f "$dir/log";
+        if (-f "$dir/log") {
+            my $l = slurp("$dir/log");
+            $l =~ s/^(?!\d\d\d\d-.*\n).*\n//mg;
+            print $l;
+        }
         print "\n";
     }
 }
