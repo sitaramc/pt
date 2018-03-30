@@ -81,7 +81,7 @@ sub _log {
     die "this command needs an ID\n" unless @_;
     my ($id, $dir) = id_dir(+shift());
     die "'log' needs some text to log!\n" unless @_;
-    dated_print("$dir/log", join(" ", @_));
+    dated_print("$dir/log", join(" ", "($ENV{USER})", @_));
 }
 
 sub _list {
