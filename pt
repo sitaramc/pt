@@ -5,6 +5,7 @@ use 5.10.0;
 use IPC::Cmd qw[can_run run run_forked];
 use File::Path qw(make_path);
 use Data::Dumper;
+use Cwd;
 
 # use Time::HiRes qw(sleep);
 # use POSIX ":sys_wait_h";
@@ -12,6 +13,8 @@ use Data::Dumper;
 # ----------------------------------------------------------------------
 # constants, globals, and option handling
 
+my $wd = getcwd();
+my $xo = $ENV{PT_XDG_OPEN} || "xdg-open";
 chdir($ENV{PROJECT_TRACKER_DIR} || "$ENV{HOME}/.project-tracker");
 
 my %dispatch = (
@@ -24,6 +27,9 @@ my %dispatch = (
     glog    =>  \&_glog,
     hist    =>  \&_history,
     history =>  \&_history,
+    fadd    =>  \&_fadd,
+    flist   =>  \&_flist,
+    fopen    => \&_fopen,
     close   =>  \&_close,
     edit    =>  \&_edit,
     sync    =>  \&_sync,
@@ -187,6 +193,40 @@ sub _history {
     }
 }
 
+sub _fadd {
+    die "this command needs an ID\n" unless @_;
+    my ($id, $dir) = id_dir(+shift());
+
+    my $file = shift;
+    $file = "$wd/$file" unless $file =~ m(^/);
+    die "can't find/read file '$file'" unless -f "$file";
+
+    make_path( "$dir/files" );
+    system("cp '$file' $dir/files");
+    _log($id, "file $file added");
+}
+
+sub _flist {
+    my ($id, $dir) = id_dir(+shift());
+    # TODO: find ALL files in system if no ID given
+    system("ls -1 $dir/files");
+}
+
+sub _fopen {
+    die "this command needs an ID\n" unless @_;
+    my ($id, $dir) = id_dir(+shift());
+
+    my $pfn = shift;   # could be partial file name
+    my @files = glob("$dir/files/*$pfn*");
+    die "no file matches '$pfn'" if @files < 1;
+    die "more than one file matches '$pfn'" if @files > 1;
+    (my $file = $files[0]) =~ s(.*/)();
+
+    die "you have '$file' in your current directory; will not overwrite, sorry!" if -f "$wd/$file";
+    system("cp '$dir/files/$file' '$wd'");
+    system($xo, "$wd/$file");
+}
+
 sub _close {
     die "this command needs an ID\n" unless @_;
     my ($id, $dir) = id_dir(+shift());
@@ -334,6 +374,11 @@ Usage:
     nt list //regex         # same, plus 'details' and 'log' also
     nt show <ID>            # full details of one specific item
     nt history <regex|tags> # search terms as for list command, shows title and log
+
+    nt fadd <ID> <file>     # attach a file to item
+    nt flist <ID>           # list files attached to an item
+    nt fopen <ID> <file>    # get file from item to current directory and open it
+                            # (partial filenames are OK, but should be unique)
 
     nt close <ID>           # adds the "closed" tag
     nt edit <ID>            # opens editor on title, details, and log files
