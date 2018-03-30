@@ -68,8 +68,10 @@ sub _tag {
     die "bad tag '$tag', please keep tags as simple words\n" if $tag =~ /[^\w@.:-]/;
     if ($tag =~ s/^-//) {
         unlink "$dir/tags/$tag";
+        _log($id, "tag $tag removed");
     } else {
         _print("$dir/tags/$tag", "");    # "touch" file (no content; just filename)
+        _log($id, "tag $tag added");
     }
 }
 
