@@ -302,6 +302,7 @@ sub usage {
 
 END { close(STDOUT); }
 sub start_pager {
+    return unless -t STDOUT;
     $ENV{LESS} ||= "-F";
     $ENV{LESS} .= "F" unless $ENV{LESS} =~ /F/;
     open(STDOUT, "|-", $ENV{PAGER} || "less");
