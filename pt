@@ -106,9 +106,9 @@ sub get_IDs {
         my @IDs;
         my $regex = shift;
         if ($regex =~ s(^/)()) {
-            @IDs = `find . -name .git -prune -o -type f -print | xargs egrep -l -i '$regex' | cut -f3 -d/ | sort -u`;
+            @IDs = `find . -maxdepth 3 -type f | grep -v ^./.git | xargs egrep -l -i '$regex' | cut -f3 -d/ | sort -u`;
         } else {
-            @IDs = `find . -name .git -prune -o -type f -name title -print | xargs egrep -l -i '$regex' | cut -f3 -d/`;
+            @IDs = `find . -maxdepth 3 -type f -name title | xargs egrep -l -i '$regex' | cut -f3 -d/ | sort -u`;
         }
         chomp(@IDs);
         map { $set{$_} = 1 } @IDs;
