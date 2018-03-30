@@ -152,8 +152,10 @@ sub _show {
     my $taglist = join(", ", map { s(.*/)(); $_ } sort glob("$dir/tags/*"));
     printf "title:\t%stags:\t%s\nid:\t%s\n\n", slurp("$dir/title"), $taglist, $id;
     printf slurp("$dir/details");
-    print "\n";
-    printf slurp("$dir/log") if -f "$dir/log";
+    if (-f "$dir/log") {
+        print "\n" . "-" x 80 . "\nLOG:\n";
+        printf slurp("$dir/log");
+    }
 }
 
 sub _glog {
