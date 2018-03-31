@@ -19,6 +19,7 @@ chdir($ENV{PROJECT_TRACKER_DIR} || "$ENV{HOME}/.project-tracker");
 
 my %dispatch = (
     new     =>  \&_new,
+    git     =>  \&_git,
     tag     =>  \&_tag,
     tags    =>  \&_tags,
     log     =>  \&_log,
@@ -27,9 +28,9 @@ my %dispatch = (
     glog    =>  \&_glog,
     hist    =>  \&_history,
     history =>  \&_history,
-    fadd    =>  \&_fadd,
-    flist   =>  \&_flist,
-    fopen    => \&_fopen,
+    attach  =>  \&_attach,
+    files   =>  \&_files,
+    open    =>  \&_fopen,
     close   =>  \&_close,
     edit    =>  \&_edit,
     sync    =>  \&_sync,
@@ -39,8 +40,6 @@ my %dispatch = (
 
 # special case for faster searches
 unshift @ARGV, 'list' if $ARGV[0] =~ m(^[/@]);
-# special case for git
-exec(@ARGV) if $ARGV[0] eq 'git';
 
 my $cmd = shift;
 usage() if $cmd eq '-h' or $cmd eq 'help';
@@ -64,6 +63,10 @@ sub _new {
     say STDERR "created $id";
     _print("$dir/title", join(" ", @_) . "\n");
     _editor("$dir/details");
+}
+
+sub _git {
+    exec("git", @ARGV);
 }
 
 sub _tag {
@@ -193,7 +196,7 @@ sub _history {
     }
 }
 
-sub _fadd {
+sub _attach {
     die "this command needs an ID\n" unless @_;
     my ($id, $dir) = id_dir(+shift());
 
@@ -206,8 +209,7 @@ sub _fadd {
     _log($id, "file $file added");
 }
 
-sub _flist {
-    my ($id, $dir) = id_dir(+shift());
+sub _files {
     # TODO: find ALL files in system if no ID given
     system("ls -1 $dir/files");
 }
@@ -376,9 +378,9 @@ Usage:
     pt show <ID>            # full details of one specific item
     pt history <regex|tags> # search terms as for list command, shows title and log
 
-    pt fadd <ID> <file>     # attach a file to item
-    pt flist <ID>           # list files attached to an item
-    pt fopen <ID> <file>    # get file from item to current directory and open it
+    pt attach <ID> <file>   # attach a file to item
+    pt files <ID>           # list files attached to an item
+    pt open <ID> <file>     # get file from item to current directory and open it
                             # (partial filenames are OK, but should be unique)
 
     pt close <ID>           # adds the "closed" tag
