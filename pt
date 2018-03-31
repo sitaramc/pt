@@ -103,6 +103,8 @@ sub _list {
         my $dir;
         ($id, $dir) = id_dir($id);
         my $taglist = join(", ", map { s(.*/)(); $_ } sort glob("$dir/tags/*"));
+        my @nfiles = glob("$dir/files/*");
+        $taglist = "[" . scalar(@nfiles) . "] $taglist" if @nfiles;
         printf "%s | %-22s | %s", $id, $taglist, slurp("$dir/title");
     }
 }
@@ -128,7 +130,7 @@ sub get_IDs {
             s(.*/)(); chomp; $set{$_} = 1
         } grep {
             m(/\d\d\d\d/)
-        } `find . -name .git -prune -o -type d -print | grep -v tags`;
+        } `find . -name .git -prune -o -type d -print | grep -v -e tags -e files`;
     }
 
     # now we have some tags to deal with, or at least '-closed'
@@ -354,7 +356,6 @@ sub start_pager {
     NOT YET IMPLEMENTED:
     pt log tag              # chronological log of all items containing tag
     pt log /regex           # same, but for items where title matches regex
-    pt attach <ID> <file>   # dream on!
 =cut
 
 __DATA__
