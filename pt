@@ -87,7 +87,7 @@ sub _tag {
 }
 
 sub _tags {
-    system("find . -name .git -prune -o -type d -name tags -print | xargs -l1 ls | sort -u");
+    system("find . -name .git -prune -o -type d -name tags -print | xargs -l1 ls | LANG=C sort -u");
 }
 
 sub _log {
@@ -119,9 +119,9 @@ sub get_IDs {
         my @IDs;
         my $regex = shift;
         if ($regex =~ s(^/)()) {
-            @IDs = `find . -maxdepth 3 -type f | grep -v ^./.git | xargs egrep -l -i '$regex' | cut -f3 -d/ | sort -u`;
+            @IDs = `find . -maxdepth 3 -type f | grep -v ^./.git | xargs egrep -l -i '$regex' | cut -f3 -d/`;
         } else {
-            @IDs = `find . -maxdepth 3 -type f -name title | xargs egrep -l -i '$regex' | cut -f3 -d/ | sort -u`;
+            @IDs = `find . -maxdepth 3 -type f -name title | xargs egrep -l -i '$regex' | cut -f3 -d/`;
         }
         chomp(@IDs);
         map { $set{$_} = 1 } @IDs;
@@ -153,7 +153,7 @@ sub get_IDs {
         }
     }
 
-    my @IDs = grep { $set{$_} } keys %set;
+    my @IDs = sort grep { $set{$_} } keys %set;
     return @IDs;
 }
 
