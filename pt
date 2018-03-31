@@ -178,6 +178,8 @@ sub _history {
         my $dir;
         ($id, $dir) = id_dir($id);
         my $taglist = join(", ", map { s(.*/)(); $_ } sort glob("$dir/tags/*"));
+        my @nfiles = glob("$dir/files/*");
+        $taglist = "[" . scalar(@nfiles) . "] $taglist" if @nfiles;
         printf "%s | %-22s | %s", $id, $taglist, slurp("$dir/title");
         if (-f "$dir/log") {
             my $l = slurp("$dir/log");
