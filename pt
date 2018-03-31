@@ -350,9 +350,9 @@ sub start_pager {
 
 =for notes
     NOT YET IMPLEMENTED:
-    nt log tag              # chronological log of all items containing tag
-    nt log /regex           # same, but for items where title matches regex
-    nt attach <ID> <file>   # dream on!
+    pt log tag              # chronological log of all items containing tag
+    pt log /regex           # same, but for items where title matches regex
+    pt attach <ID> <file>   # dream on!
 =cut
 
 __DATA__
@@ -362,35 +362,35 @@ Manage "notes".  Each "note" has a 1-line "title" file, and free-form
 tag "closed" has a special meaning (which should be obvious).
 
 Usage:
-    nt new <title>          # also opens an editor to take "details"
-    nt tag <ID> <tag>       # add a tag
-    nt tag <ID> -<tag>      # remove a tag (note the "-" sign)
-    nt tags                 # list of all tags ever used in system (to check typos!)
+    pt new <title>          # also opens an editor to take "details"
+    pt tag <ID> <tag>       # add a tag
+    pt tag <ID> -<tag>      # remove a tag (note the "-" sign)
+    pt tags                 # list of all tags ever used in system (to check typos!)
 
-    nt log <ID> <text>      # append text to the "log" file of <ID>
+    pt log <ID> <text>      # append text to the "log" file of <ID>
 
-    nt list [tagnames]      # search tags; see notes below for details
-    nt list /regex          # search 'title' (case insensitive)
-    nt list //regex         # same, plus 'details' and 'log' also
-    nt show <ID>            # full details of one specific item
-    nt history <regex|tags> # search terms as for list command, shows title and log
+    pt list [tagnames]      # search tags; see notes below for details
+    pt list /regex          # search 'title' (case insensitive)
+    pt list //regex         # same, plus 'details' and 'log' also
+    pt show <ID>            # full details of one specific item
+    pt history <regex|tags> # search terms as for list command, shows title and log
 
-    nt fadd <ID> <file>     # attach a file to item
-    nt flist <ID>           # list files attached to an item
-    nt fopen <ID> <file>    # get file from item to current directory and open it
+    pt fadd <ID> <file>     # attach a file to item
+    pt flist <ID>           # list files attached to an item
+    pt fopen <ID> <file>    # get file from item to current directory and open it
                             # (partial filenames are OK, but should be unique)
 
-    nt close <ID>           # adds the "closed" tag
-    nt edit <ID>            # opens editor on title, details, and log files
+    pt close <ID>           # adds the "closed" tag
+    pt edit <ID>            # opens editor on title, details, and log files
                             #   !! USE WITH CARE !!
 
-    nt sync                 # add and commit local changes, pull, and push
+    pt sync                 # add and commit local changes, pull, and push
 
 Notes:
 -   You need not supply the full ID; just the first 2-4 characters after the
     date should be fine (as much as is needed to establish uniqueness)
 
--   'nt list' in tag-search mode shows only open items; if you want closed
+-   'pt list' in tag-search mode shows only open items; if you want closed
     items add the tag 'closed' explicitly.  Multiple tags are OR-ed.  You can
-    prefix a tag with "-" to negate it (e.g. 'nt list foo -bar' shows items
+    prefix a tag with "-" to negate it (e.g. 'pt list foo -bar' shows items
     that have tag foo but do not have ta bar).
