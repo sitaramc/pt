@@ -13,10 +13,6 @@ use Cwd;
 # ----------------------------------------------------------------------
 # constants, globals, and option handling
 
-my $wd = getcwd();
-my $xo = $ENV{PT_XDG_OPEN} || "xdg-open";
-chdir($ENV{PROJECT_TRACKER_DIR} || "$ENV{HOME}/.project-tracker");
-
 my %dispatch = (
     new     =>  \&_new,
     git     =>  \&_git,
@@ -25,8 +21,6 @@ my %dispatch = (
     log     =>  \&_log,
     list    =>  \&_list,
     show    =>  \&_show,
-    glog    =>  \&_glog,
-    hist    =>  \&_history,
     history =>  \&_history,
     attach  =>  \&_attach,
     files   =>  \&_files,
@@ -43,6 +37,11 @@ unshift @ARGV, 'list' if $ARGV[0] =~ m(^[/@]);
 
 my $cmd = shift;
 usage() if $cmd eq '-h' or $cmd eq 'help';
+
+my $wd = getcwd();
+my $xo = $ENV{PROJECT_TRACKER_XDG_OPEN} || "xdg-open";
+chdir($ENV{PROJECT_TRACKER_DIR} || "$ENV{HOME}/.project-tracker") or die "I can't find the project tracker data!\n";
+
 die "Invalid command; run with '-h' to see usage" unless $dispatch{$cmd};
 
 # ----------------------------------------------------------------------
@@ -169,17 +168,8 @@ sub _show {
     }
 }
 
-sub _glog {
-    die "this command needs an ID\n" unless @_;
-    my ($id, $dir) = id_dir(+shift());
-
-    push @_, $dir;
-    system("echo", "+git", "log", @_);
-    system("git", "log", @_);
-}
-
 sub _history {
-    die "unlike 'list', 'hist' *requires* a search term (/regex, //regex, or list of tags\n" unless @_;
+    die "unlike 'list', 'history' *requires* a search term (/regex, //regex, or list of tags\n" unless @_;
 
     my @IDs = get_IDs(@_);
 
@@ -204,7 +194,7 @@ sub _attach {
 
     my $file = shift;
     $file = "$wd/$file" unless $file =~ m(^/);
-    die "can't find/read file '$file'" unless -f "$file";
+    die "can't find/read file '$file'\n" unless -f "$file";
 
     make_path( "$dir/files" );
     system("cp '$file' $dir/files");
@@ -213,6 +203,8 @@ sub _attach {
 
 sub _files {
     # TODO: find ALL files in system if no ID given
+    die "this command needs an ID\n" unless @_;
+    my ($id, $dir) = id_dir(+shift());
     system("ls -1 $dir/files");
 }
 
@@ -222,11 +214,11 @@ sub _fopen {
 
     my $pfn = shift;   # could be partial file name
     my @files = glob("$dir/files/*$pfn*");
-    die "no file matches '$pfn'" if @files < 1;
-    die "more than one file matches '$pfn'" if @files > 1;
+    die "no file matches '$pfn'\n" if @files < 1;
+    die "more than one file matches '$pfn'\n" if @files > 1;
     (my $file = $files[0]) =~ s(.*/)();
 
-    die "you have '$file' in your current directory; will not overwrite, sorry!" if -f "$wd/$file";
+    die "you have '$file' in your current directory; will not overwrite, sorry!\n" if -f "$wd/$file";
     system("cp '$dir/files/$file' '$wd'");
     system($xo, "$wd/$file");
 }
@@ -246,7 +238,7 @@ sub _edit {
 }
 
 sub _sync {
-    system("git add -A; git commit -m $ENV{USER}; git pull; git push");
+    system("git add -A; git commit -m $ENV{USER}; git pull; git push origin master");
     exit $? >> 8;
 }
 
