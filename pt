@@ -357,9 +357,10 @@ sub start_pager {
 
 __DATA__
 
-Manage "notes".  Each "note" has a 1-line "title" file, and free-form
-"details" and "log" files.  Each note also has zero or more "tags".  The
-tag "closed" has a special meaning (which should be obvious).
+Simple git-aware project tracker.  Each item (issue, note, whatever you want
+to call it) has a 1-line "title" file, a free-form "details" file, and a
+mostly free-form "log" file.  It also has zero or more "tags".  The tag
+"closed" has a special meaning (which should be obvious).
 
 Usage:
     pt new <title>          # also opens an editor to take "details"
@@ -369,9 +370,9 @@ Usage:
 
     pt log <ID> <text>      # append text to the "log" file of <ID>
 
-    pt list [tagnames]      # search tags; see notes below for details
-    pt list /regex          # search 'title' (case insensitive)
-    pt list //regex         # same, plus 'details' and 'log' also
+    pt                      # same as 'pt list' without arguments
+    pt list                 # list all open items
+    pt list <arguments>     # see LIST MODE below
     pt show <ID>            # full details of one specific item
     pt history <regex|tags> # search terms as for list command, shows title and log
 
@@ -386,11 +387,23 @@ Usage:
 
     pt sync                 # add and commit local changes, pull, and push
 
-Notes:
--   You need not supply the full ID; just the first 2-4 characters after the
-    date should be fine (as much as is needed to establish uniqueness)
+NOTE on <ID>: You need not supply the full ID; just the first few characters
+after the date should be fine (as much as is needed to establish uniqueness)
 
--   'pt list' in tag-search mode shows only open items; if you want closed
-    items add the tag 'closed' explicitly.  Multiple tags are OR-ed.  You can
-    prefix a tag with "-" to negate it (e.g. 'pt list foo -bar' shows items
-    that have tag foo but do not have ta bar).
+LIST MODE:
+-   List mode with arguments has the following variants.  In all cases, unless
+    the tag "closed" is supplied, only open items are listed.
+
+    pt list /regex          # list items where regex matches in title
+    pt list //regex         # same, but match in title, details, or log
+    pt list tag1 tag2 [...] # list items that have ALL the tags listed
+
+-   The taglist can have negations; e.g., 'tag1 -tag2' finds items that have
+    tag1 and do not have tag2.
+
+-   You can combine regex and taglist, but the regex must come first.  For
+    example, '/foo tag1 -tag2' lists items matching foo in the title which
+    contain tag1 and do not contain tag2.
+
+-   As a convenience, when using any of the regex forms, the command keyword
+    'list' is optional: 'pt /foo tag1' is the same as 'pt list /foo tag1'.
