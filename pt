@@ -20,8 +20,11 @@ my %dispatch = (
     tags    =>  \&_tags,
     log     =>  \&_log,
     list    =>  \&_list,
+    l       =>  \&_list,
     show    =>  \&_show,
+    s       =>  \&_show,
     history =>  \&_history,
+    h       =>  \&_history,
     attach  =>  \&_attach,
     files   =>  \&_files,
     open    =>  \&_fopen,
@@ -364,7 +367,6 @@ Usage:
     pt tag <ID> <tag>       # add a tag
     pt tag <ID> -<tag>      # remove a tag (note the "-" sign)
     pt tags                 # list of all tags ever used in system (to check typos!)
-
     pt log <ID> <text>      # append text to the "log" file of <ID>
 
     pt                      # same as 'pt list' without arguments
@@ -372,6 +374,7 @@ Usage:
     pt list <arguments>     # see LIST MODE below
     pt show <ID>            # full details of one specific item
     pt history <regex|tags> # search terms as for list command, shows title and log
+        (the above 3 commands can be abbreviated to 'l', 's', and 'h')
 
     pt attach <ID> <file>   # attach a file to item
     pt files <ID>           # list files attached to an item
@@ -383,6 +386,7 @@ Usage:
                             #   !! USE WITH CARE !!
 
     pt sync                 # add and commit local changes, pull, and push
+    pt git <arguments>      # run any git command
 
 NOTE on <ID>: You need not supply the full ID; just the first few characters
 after the date should be fine (as much as is needed to establish uniqueness)

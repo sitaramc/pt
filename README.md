@@ -89,7 +89,9 @@ try listing them:
     2018-03-31-71ed48a4-34a4 |                        | item cc
     2018-03-31-771b484e-34a4 |                        | item dd
 
-## search in title
+## list by matching in title
+
+**NOTE**: the `list` command can be abbreviated as `l` for convenience.
 
 You can search on the title:
 
@@ -99,6 +101,8 @@ You can search on the title:
 or on the title, detail, or log (but we'll see this later).
 
 ## show an issue in full
+
+**NOTE**: the `show` command can be abbreviated as `s` for convenience.
 
 You can show all the details of an issue, including tags, details, and log
 events.
@@ -143,7 +147,7 @@ then try listing all the items again:
     2018-03-31-71ed48a4-34a4 | bar                    | item cc
     2018-03-31-771b484e-34a4 |                        | item dd
 
-## search by tag
+## list by matching tags
 
 You can search by tags; notice all the combinations we're trying, and compare
 them to the full list above:
@@ -165,7 +169,7 @@ them to the full list above:
     $ pt list bar -foo
     2018-03-31-71ed48a4-34a4 | bar                    | item cc
 
-## search by title *and* tag
+## list by matching in title *and* tag
 
 You can also search by title **and** tag:
 
@@ -219,6 +223,8 @@ Let's add an event to the other issue:
     $ pt log 0d logging something here
 
 ## check the history
+
+**NOTE**: the `history` command can be abbreviated as `h` for convenience.
 
 You can check the history of one or more items, using the same search criteria
 shown before:
@@ -388,7 +394,6 @@ Here's the inline help, accessed by running `pt help` or `pt -h`:
         pt tag <ID> <tag>       # add a tag
         pt tag <ID> -<tag>      # remove a tag (note the "-" sign)
         pt tags                 # list of all tags ever used in system (to check typos!)
-
         pt log <ID> <text>      # append text to the "log" file of <ID>
 
         pt                      # same as 'pt list' without arguments
@@ -396,6 +401,7 @@ Here's the inline help, accessed by running `pt help` or `pt -h`:
         pt list <arguments>     # see LIST MODE below
         pt show <ID>            # full details of one specific item
         pt history <regex|tags> # search terms as for list command, shows title and log
+            (the above 3 commands can be abbreviated to 'l', 's', and 'h')
 
         pt attach <ID> <file>   # attach a file to item
         pt files <ID>           # list files attached to an item
@@ -407,6 +413,7 @@ Here's the inline help, accessed by running `pt help` or `pt -h`:
                                 #   !! USE WITH CARE !!
 
         pt sync                 # add and commit local changes, pull, and push
+        pt git <arguments>      # run any git command
 
     NOTE on <ID>: You need not supply the full ID; just the first few characters
     after the date should be fine (as much as is needed to establish uniqueness)
