@@ -260,7 +260,11 @@ sub _edit {
 }
 
 sub _sync {
-    system("git add -A; git commit -m $ENV{USER}; git pull; git push origin master");
+    system("git add -A");
+    system("git diff --cached --name-only | cut -f1,2 -d/ | sort -u | xargs -I % cat %/title | sort | git commit -F -");
+    system("git pull");
+    system("git push origin master");
+
     exit $? >> 8;
 }
 
