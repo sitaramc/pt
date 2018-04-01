@@ -116,16 +116,16 @@ sub get_IDs {
     push @_, '-closed' unless grep { $_ eq 'closed' } @_;
 
     if ($_[0] =~ s(^/)()) {
-        my @IDs;
-        my $regex = shift;
-        if ($regex =~ s(^/)()) {
-            @IDs = `find . -maxdepth 3 -type f | grep -v ^./.git | xargs egrep -l -i '$regex' | cut -f3 -d/`;
-        } else {
-            @IDs = `find . -maxdepth 3 -type f -name title | xargs egrep -l -i '$regex' | cut -f3 -d/`;
-        }
-        chomp(@IDs);
+        my @IDs = grep_IDs(+shift());
         map { $set{$_} = 1 } @IDs;
-        # now you have a starting set for tag filtering
+
+        # that's the first regex.  Any subsequent regexes need to be AND-ed
+        while ($_[0] =~ s(^/)()) {
+            my %IDs = map { $_ => 1 } grep_IDs(+shift());
+            for my $k (keys %set) {
+                delete $set{$k} unless exists $IDs{$k};
+            }
+        }
     } else {
         # if no regex was given, seed the set with ALL items
         map {
@@ -135,7 +135,8 @@ sub get_IDs {
         } `find . -name .git -prune -o -type d -print | grep -v -e tags -e files`;
     }
 
-    # now we have some tags to deal with, or at least '-closed'
+    # we're done with the regexes, one way or the other.  Now we have to deal
+    # with the tags (or at least '-closed')
 
     # get all the filenames under "tags"
     my $tags = `find . -name .git -prune -o -type f -print | grep /tags/`;
@@ -154,6 +155,18 @@ sub get_IDs {
     }
 
     my @IDs = sort grep { $set{$_} } keys %set;
+    return @IDs;
+}
+
+sub grep_IDs {
+    my $regex = shift;
+    my @IDs;
+    if ($regex =~ s(^/)()) {
+        @IDs = `find . -maxdepth 3 -type f | grep -v ^./.git | xargs egrep -l -i '$regex' | cut -f3 -d/`;
+    } else {
+        @IDs = `find . -maxdepth 3 -type f -name title | xargs egrep -l -i '$regex' | cut -f3 -d/`;
+    }
+    chomp(@IDs);
     return @IDs;
 }
 
@@ -397,14 +410,14 @@ LIST MODE:
 
     pt list /regex          # list items where regex matches in title
     pt list //regex         # same, but match in title, details, or log
+    pt list /regex1 //regex2 [...]
+                            # list items matching multiple regexes (of either kind)
     pt list tag1 tag2 [...] # list items that have ALL the tags listed
 
--   The taglist can have negations; e.g., 'tag1 -tag2' finds items that have
-    tag1 and do not have tag2.
+-   The tags can have negations; e.g., 'tag1 -tag2' finds items that have tag1
+    and do not have tag2.
 
--   You can combine regex and taglist, but the regex must come first.  For
-    example, '/foo tag1 -tag2' lists items matching foo in the title which
-    contain tag1 and do not contain tag2.
-
--   As a convenience, when using any of the regex forms, the command keyword
-    'list' is optional: 'pt /foo tag1' is the same as 'pt list /foo tag1'.
+-   You can combine regexes and tags, but the regexes must come first.  For
+    example, '/foo //bar tag1 -tag2' lists items matching foo in the title,
+    and containing bar in the title, details, or log, and which contain
+    tag1 and do not contain tag2.
