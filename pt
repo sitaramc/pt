@@ -181,11 +181,12 @@ sub _show {
         print "\t$_" for `ls -1 $dir/files`;
     }
     print "\n";
-    printf slurp("$dir/details");
+    print slurp("$dir/details");
     if (-f "$dir/log") {
         print "\n" . "-" x 80 . "\nLOG:\n";
-        printf slurp("$dir/log");
+        print slurp("$dir/log");
     }
+    print "\n" . "=" x 80 . "\n";
 }
 
 sub _history {
