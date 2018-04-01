@@ -75,14 +75,16 @@ sub _tag {
     die "this command needs an ID\n" unless @_;
     my ($id, $dir) = id_dir(+shift());
 
-    my $tag = shift;
-    die "bad tag '$tag', please keep tags as simple words\n" if $tag =~ /[^\w@.:-]/;
-    if ($tag =~ s/^-//) {
-        unlink "$dir/tags/$tag";
-        _log($id, "tag $tag removed");
-    } else {
-        _print("$dir/tags/$tag", "");    # "touch" file (no content; just filename)
-        _log($id, "tag $tag added");
+    while (@_) {
+        my $tag = shift;
+        warn("ignoring bad tag '$tag', please keep tags as simple words\n"), next if $tag =~ /[^\w@.:-]/;
+        if ($tag =~ s/^-//) {
+            unlink "$dir/tags/$tag";
+            _log($id, "tag $tag removed");
+        } else {
+            _print("$dir/tags/$tag", "");    # "touch" file (no content; just filename)
+            _log($id, "tag $tag added");
+        }
     }
 }
 
