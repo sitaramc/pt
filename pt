@@ -115,41 +115,39 @@ sub get_IDs {
     my %set;
     push @_, '-closed' unless grep { $_ eq 'closed' } @_;
 
-    if ($_[0] =~ s(^/)()) {
-        my @IDs = grep_IDs(+shift());
-        map { $set{$_} = 1 } @IDs;
-
-        # that's the first regex.  Any subsequent regexes need to be AND-ed
-        while ($_[0] =~ s(^/)()) {
-            my %IDs = map { $_ => 1 } grep_IDs(+shift());
-            for my $k (keys %set) {
-                delete $set{$k} unless exists $IDs{$k};
-            }
-        }
-    } else {
-        # if no regex was given, seed the set with ALL items
-        map {
-            s(.*/)(); chomp; $set{$_} = 1
-        } grep {
-            m(/\d\d\d\d/)
-        } `find . -name .git -prune -o -type d -print | grep -v -e tags -e files`;
-    }
-
-    # we're done with the regexes, one way or the other.  Now we have to deal
-    # with the tags (or at least '-closed')
+    # seed the set with ALL items
+    map {
+        s(.*/)(); chomp; $set{$_} = 1
+    } grep {
+        m(/\d\d\d\d/)
+    } `find . -name .git -prune -o -type d -print | grep -v -e tags -e files`;
 
     # get all the filenames under "tags"
     my $tags = `find . -name .git -prune -o -type f -print | grep /tags/`;
 
-    # process each tag in our selection list
-    for my $tag (@_) {
-        if ($tag =~ s/^-//) {
+    while (@_) {
+        my $rot = shift;     # regex or tag
+        if ($rot =~ s(^/)()) {
+            # positive regex
+            my %IDs = map { $_ => 1 } grep_IDs($rot);
+            for my $k (keys %set) {
+                delete $set{$k} unless exists $IDs{$k};
+            }
+        } elsif ($rot =~ s(^-/)()) {
+            # negative regex
+            my %IDs = map { $_ => 1 } grep_IDs($rot);
+            for my $k (keys %set) {
+                delete $set{$k} if exists $IDs{$k};
+            }
+        } elsif ($rot =~ s/^-//) {
+            # negative tag
             map {
-                delete $set{$_} if $tags =~ m(/$_/tags/$tag$)m
+                delete $set{$_} if $tags =~ m(/$_/tags/$rot$)m
             } sort keys %set;
         } else {
+            # positive tag
             map {
-                delete $set{$_} unless $tags =~ m(/$_/tags/$tag$)m
+                delete $set{$_} unless $tags =~ m(/$_/tags/$rot$)m
             } sort keys %set;
         }
     }
@@ -416,14 +414,11 @@ LIST MODE:
 
     pt list /regex          # list items where regex matches in title
     pt list //regex         # same, but match in title, details, or log
-    pt list /regex1 //regex2 [...]
-                            # list items matching multiple regexes (of either kind)
-    pt list tag1 tag2 [...] # list items that have ALL the tags listed
+    pt list tag1            # list items containing the tag
 
--   The tags can have negations; e.g., 'tag1 -tag2' finds items that have tag1
-    and do not have tag2.
+-   You can use any number of regexes and tags; they are all ANDed together.
 
--   You can combine regexes and tags, but the regexes must come first.  For
-    example, '/foo //bar tag1 -tag2' lists items matching foo in the title,
-    and containing bar in the title, details, or log, and which contain
+-   You can also have negations; e.g., '-tag2' or '-/regex'.  As a final
+    example, '/foo -//bar tag1 -tag2' lists items matching foo in the title,
+    and *not* matching bar in the title, details, or log, and which contain
     tag1 and do not contain tag2.

@@ -93,12 +93,19 @@ try listing them:
 
 **NOTE**: the `list` command can be abbreviated as `l` for convenience.
 
-You can search on the title:
+You can search on the title using a regular expression:
 
-    $ pt list /aa
+    $ pt list /issue
     2018-03-31-0d8ef858-34a4 |                        | issue aa
+    2018-03-31-6da36b5c-34a4 |                        | issue bb
 
-or on the title, detail, or log (but we'll see this later).
+You can have multiple regexes, and some of them can be negated also:
+
+    $ pt list /issue -/aa
+    2018-03-31-6da36b5c-34a4 |                        | issue bb
+
+You can also search on the combined content of the title, detail, and log (but
+we'll see this later).
 
 ## show an issue in full
 
@@ -149,8 +156,8 @@ then try listing all the items again:
 
 ## list by matching tags
 
-You can search by tags; notice all the combinations we're trying, and compare
-them to the full list above:
+You can search by tags, same as regexes, including negation.  Notice all the
+combinations we're trying, and compare them to the full list above:
 
     $ pt list foo
     2018-03-31-0d8ef858-34a4 | foo                    | issue aa
@@ -169,9 +176,12 @@ them to the full list above:
     $ pt list bar -foo
     2018-03-31-71ed48a4-34a4 | bar                    | item cc
 
-## list by matching in title *and* tag
+    $ pt list -bar -foo
+    2018-03-31-771b484e-34a4 |                        | item dd
 
-You can also search by title **and** tag:
+## combining regex match and tags
+
+You can combine both kinds of searches shown before:
 
     $ pt list /issue foo
     2018-03-31-0d8ef858-34a4 | foo                    | issue aa
@@ -182,6 +192,15 @@ You can also search by title **and** tag:
 
     $ pt list /issue -bar
     2018-03-31-0d8ef858-34a4 | foo                    | issue aa
+
+In fact, **you can specify any number of regexes and any numeber of tags**;
+they will all be AND-ed together.
+
+    $ pt /issue -/aa foo
+    2018-03-31-6da36b5c-34a4 | bar, foo               | issue bb
+
+    $ pt /issue -/aa foo -bar
+    <no output>
 
 ## list all tags
 
@@ -342,6 +361,8 @@ below:
     title:  issue aa
     tags:   foo
     id:     2018-03-31-0d8ef858-34a4
+    files:
+            something.png
 
     # by: sitaram
     detail for issue 1
@@ -424,15 +445,12 @@ Here's the inline help, accessed by running `pt help` or `pt -h`:
 
         pt list /regex          # list items where regex matches in title
         pt list //regex         # same, but match in title, details, or log
-        pt list tag1 tag2 [...] # list items that have ALL the tags listed
+        pt list tag1            # list items containing the tag
 
-    -   The taglist can have negations; e.g., 'tag1 -tag2' finds items that have
-        tag1 and do not have tag2.
+    -   You can use any number of regexes and tags; they are all ANDed together.
 
-    -   You can combine regex and taglist, but the regex must come first.  For
-        example, '/foo tag1 -tag2' lists items matching foo in the title which
-        contain tag1 and do not contain tag2.
-
-    -   As a convenience, when using any of the regex forms, the command keyword
-        'list' is optional: 'pt /foo tag1' is the same as 'pt list /foo tag1'.
+    -   You can also have negations; e.g., '-tag2' or '-/regex'.  As a final
+        example, '/foo -//bar tag1 -tag2' lists items matching foo in the title,
+        and *not* matching bar in the title, details, or log, and which contain
+        tag1 and do not contain tag2.
 
