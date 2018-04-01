@@ -176,7 +176,13 @@ sub _show {
 
     start_pager();
     my $taglist = join(", ", map { s(.*/)(); $_ } sort glob("$dir/tags/*"));
-    printf "title:\t%stags:\t%s\nid:\t%s\n\n", slurp("$dir/title"), $taglist, $id;
+    printf "title:\t%stags:\t%s\n", slurp("$dir/title"), $taglist;
+    printf "id:\t%s\n", $id;
+    if (glob("$dir/files/*")) {
+        print "files:\n";
+        print "\t$_" for `ls -1 $dir/files`;
+    }
+    print "\n";
     printf slurp("$dir/details");
     if (-f "$dir/log") {
         print "\n" . "-" x 80 . "\nLOG:\n";
