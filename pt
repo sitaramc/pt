@@ -36,7 +36,7 @@ my %dispatch = (
 @ARGV = qw(list) unless @ARGV;
 
 # special case for faster searches
-unshift @ARGV, 'list' if $ARGV[0] =~ m(^[/@]);
+unshift @ARGV, 'list' if $ARGV[0] =~ m(^[/@-]);
 
 my $cmd = shift;
 usage() if $cmd eq '-h' or $cmd eq 'help';
