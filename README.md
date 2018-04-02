@@ -111,21 +111,11 @@ we'll see this later).
 
 **NOTE**: the `show` command can be abbreviated as `s` for convenience.
 
-You can show all the details of an issue, including tags, details, and log
-events.
+You can show all the details of an issue, including tags, details, any
+attached files, and log events.
 
-You can do this by using an item's full ID:
-
-    $ pt show 2018-03-31-71ed48a4-34a4
-    title:  item cc
-    tags:   
-    id:     2018-03-31-71ed48a4-34a4
-
-    # by: sitaram
-    detail for issue 3
-
-or a short ID, rather like git's hashes; simply take the first few characters
-after the date and the hyphen:
+You can do this by using an item's short ID, rather like git's hashes; simply
+take the first few characters after the date and the hyphen:
 
     $ pt show 6d
     title:  issue bb
@@ -134,6 +124,16 @@ after the date and the hyphen:
 
     # by: sitaram
     detail for issue 2
+
+Or you can use its full ID:
+
+    $ pt show 2018-03-31-71ed48a4-34a4
+    title:  item cc
+    tags:   
+    id:     2018-03-31-71ed48a4-34a4
+
+    # by: sitaram
+    detail for issue 3
 
 We haven't added any log events yet; if we had we'd see them too.
 
@@ -156,7 +156,7 @@ then try listing all the items again:
 
 ## list by matching tags
 
-You can search by tags, same as regexes, including negation.  Notice all the
+You can list by tags, same as regexes, including negation.  Notice all the
 combinations we're trying, and compare them to the full list above:
 
     $ pt list foo
@@ -245,8 +245,15 @@ Let's add an event to the other issue:
 
 **NOTE**: the `history` command can be abbreviated as `h` for convenience.
 
-You can check the history of one or more items, using the same search criteria
-shown before:
+You can check the history of one or more items, using either an
+
+*   item's ID (full or abbreviated), or
+
+*   a search expression that is similar to the list command's search syntax
+    shown above, **except** that it **must** start with a regex (i.e., it
+    cannot start with a tag):
+
+Here's one with just a regex:
 
     $ pt history /issue
     2018-03-31-0d8ef858-34a4 | foo                    | issue aa
@@ -310,9 +317,9 @@ This shows us the item ID.  Or you can use the history command:
 
     $ pt history //file.*thing.*added
     2018-03-31-0d8ef858-34a4 | foo                    | issue aa
-    2018-03-31      (g3) tag foo added
-    2018-03-31      (g3) logging something here
-    2018-03-31      (g3) file /home/g3/something.png added
+    2018-03-31      (sitaram) tag foo added
+    2018-03-31      (sitaram) logging something here
+    2018-03-31      (sitaram) file /home/sitaram/something.png added
 
 where the last log line shows you the name of the file you added (the actual
 filename is of course only the basename).
@@ -418,11 +425,11 @@ Here's the inline help, accessed by running `pt help` or `pt -h`:
         pt log <ID> <text>      # append text to the "log" file of <ID>
 
         pt                      # same as 'pt list' without arguments
-        pt list                 # list all open items
-        pt list <arguments>     # see LIST MODE below
-        pt show <ID>            # full details of one specific item
-        pt history <regex|tags> # search terms as for list command, shows title and log
-            (the above 3 commands can be abbreviated to 'l', 's', and 'h')
+        pt list                 # list all open items (i.e., same as 'pt list -closed')
+        pt list <arguments>             # see LIST MODE below
+        pt show <ID|search terms>       # see SHOW MODE below
+        pt hist <ID|search terms>       # see HIST MODE below
+            (the above 3 commands can be abbreviated to 'l', 's', and 'h', respectivey)
 
         pt attach <ID> <file>   # attach a file to item
         pt files <ID>           # list files attached to an item
@@ -439,7 +446,15 @@ Here's the inline help, accessed by running `pt help` or `pt -h`:
     NOTE on <ID>: You need not supply the full ID; just the first few characters
     after the date should be fine (as much as is needed to establish uniqueness)
 
-    LIST MODE:
+    LIST MODE
+
+    -   List mode shows each item in a single line, formatted loosely as follows:
+
+            ID  |  list of tags  |  title
+
+        The list of tags field also has a number in brackets, like [2], showing
+        the number of files attached to that item, if any.
+
     -   List mode with arguments has the following variants.  In all cases, unless
         the tag "closed" is supplied, only open items are listed.
 
@@ -447,10 +462,31 @@ Here's the inline help, accessed by running `pt help` or `pt -h`:
         pt list //regex         # same, but match in title, details, or log
         pt list tag1            # list items containing the tag
 
+        In particular, note that list mode cannot take a single ID as an argument.
+        It has to be some kind of search.
+
     -   You can use any number of regexes and tags; they are all ANDed together.
 
     -   You can also have negations; e.g., '-tag2' or '-/regex'.  As a final
         example, '/foo -//bar tag1 -tag2' lists items matching foo in the title,
         and *not* matching bar in the title, details, or log, and which contain
         tag1 and do not contain tag2.
+
+    SHOW MODE
+
+    -   Show mode shows each item in full, in a self explanatory format.
+
+    -   Show mode can take a single ID as an argument and will then show only that
+        item.  It can also take search arguments like LIST MODE above, except that
+        you *must* have a regex as the first item; if you start the expression
+        with a tag it won't work.
+
+    HIST MODE
+
+    *   History mode shows the first line in the same format as the list command,
+        then shows all lines from the "log" file that start with a date
+        (YYYY-MM-DD); in effect, this is an event log for the item.
+
+    -   History mode search terms have the same rules as SHOW MODE above
+
 

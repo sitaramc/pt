@@ -23,7 +23,7 @@ my %dispatch = (
     l       =>  \&_list,
     show    =>  \&_show,
     s       =>  \&_show,
-    history =>  \&_history,
+    hist    =>  \&_history,
     h       =>  \&_history,
     attach  =>  \&_attach,
     files   =>  \&_files,
@@ -170,35 +170,54 @@ sub grep_IDs {
 }
 
 sub _show {
-    die "this command needs an ID\n" unless @_;
-    my ($id, $dir) = id_dir(+shift());
-
+    die "this command needs a single ID or something to search on\n" unless @_;
     start_pager();
-    my $taglist = join(", ", map { s(.*/)(); $_ } sort glob("$dir/tags/*"));
-    printf "title:\t%stags:\t%s\n", slurp("$dir/title"), $taglist;
-    printf "id:\t%s\n", $id;
-    if (glob("$dir/files/*")) {
-        print "files:\n";
-        print "\t$_" for `ls -1 $dir/files`;
+
+    my @IDs;
+    if ($_[0] =~ m(^/)) {
+        @IDs = get_IDs(@_);
+    } else {
+        die "this command needs a single ID or something to search on\n" if @_ > 1;
+        @IDs = @_;
     }
-    print "\n";
-    print slurp("$dir/details");
-    if (-f "$dir/log") {
-        print "\n" . "-" x 80 . "\nLOG:\n";
-        print slurp("$dir/log");
-    }
-    print "\n" . "=" x 80 . "\n";
-}
 
-sub _history {
-    die "unlike 'list', 'history' *requires* a search term (/regex, //regex, or list of tags\n" unless @_;
-
-    my @IDs = get_IDs(@_);
-
-    start_pager();
     for my $id (sort @IDs) {
         my $dir;
         ($id, $dir) = id_dir($id);
+
+        my $taglist = join(", ", map { s(.*/)(); $_ } sort glob("$dir/tags/*"));
+        printf "title:\t%stags:\t%s\n", slurp("$dir/title"), $taglist;
+        printf "id:\t%s\n", $id;
+        if (glob("$dir/files/*")) {
+            print "files:\n";
+            print "\t$_" for `ls -1 $dir/files`;
+        }
+        print "\n";
+        print slurp("$dir/details");
+        if (-f "$dir/log") {
+            print "\n" . "-" x 80 . "\nLOG:\n";
+            print slurp("$dir/log");
+        }
+        print "\n" . "=" x 80 . "\n";
+    }
+}
+
+sub _history {
+    die "this command needs an ID or something to search on\n" unless @_;
+    start_pager();
+
+    my @IDs;
+    if ($_[0] =~ m(^/)) {
+        @IDs = get_IDs(@_);
+    } else {
+        die "this command needs a single ID or something to search on\n" if @_ > 1;
+        @IDs = @_;
+    }
+
+    for my $id (sort @IDs) {
+        my $dir;
+        ($id, $dir) = id_dir($id);
+
         my $taglist = join(", ", map { s(.*/)(); $_ } sort glob("$dir/tags/*"));
         my @nfiles = glob("$dir/files/*");
         $taglist = "[" . scalar(@nfiles) . "] $taglist" if @nfiles;
@@ -393,11 +412,11 @@ Usage:
     pt log <ID> <text>      # append text to the "log" file of <ID>
 
     pt                      # same as 'pt list' without arguments
-    pt list                 # list all open items
-    pt list <arguments>     # see LIST MODE below
-    pt show <ID>            # full details of one specific item
-    pt history <regex|tags> # search terms as for list command, shows title and log
-        (the above 3 commands can be abbreviated to 'l', 's', and 'h')
+    pt list                 # list all open items (i.e., same as 'pt list -closed')
+    pt list <arguments>             # see LIST MODE below
+    pt show <ID|search terms>       # see SHOW MODE below
+    pt hist <ID|search terms>       # see HIST MODE below
+        (the above 3 commands can be abbreviated to 'l', 's', and 'h', respectivey)
 
     pt attach <ID> <file>   # attach a file to item
     pt files <ID>           # list files attached to an item
@@ -414,7 +433,15 @@ Usage:
 NOTE on <ID>: You need not supply the full ID; just the first few characters
 after the date should be fine (as much as is needed to establish uniqueness)
 
-LIST MODE:
+LIST MODE
+
+-   List mode shows each item in a single line, formatted loosely as follows:
+
+        ID  |  list of tags  |  title
+
+    The list of tags field also has a number in brackets, like [2], showing
+    the number of files attached to that item, if any.
+
 -   List mode with arguments has the following variants.  In all cases, unless
     the tag "closed" is supplied, only open items are listed.
 
@@ -422,9 +449,30 @@ LIST MODE:
     pt list //regex         # same, but match in title, details, or log
     pt list tag1            # list items containing the tag
 
+    In particular, note that list mode cannot take a single ID as an argument.
+    It has to be some kind of search.
+
 -   You can use any number of regexes and tags; they are all ANDed together.
 
 -   You can also have negations; e.g., '-tag2' or '-/regex'.  As a final
     example, '/foo -//bar tag1 -tag2' lists items matching foo in the title,
     and *not* matching bar in the title, details, or log, and which contain
     tag1 and do not contain tag2.
+
+SHOW MODE
+
+-   Show mode shows each item in full, in a self explanatory format.
+
+-   Show mode can take a single ID as an argument and will then show only that
+    item.  It can also take search arguments like LIST MODE above, except that
+    you *must* have a regex as the first item; if you start the expression
+    with a tag it won't work.
+
+HIST MODE
+
+*   History mode shows the first line in the same format as the list command,
+    then shows all lines from the "log" file that start with a date
+    (YYYY-MM-DD); in effect, this is an event log for the item.
+
+-   History mode search terms have the same rules as SHOW MODE above
+
