@@ -35,16 +35,15 @@ my %dispatch = (
 
 @ARGV = qw(list) unless @ARGV;
 
-# special case for faster searches
+# special cases
+usage() if $ARGV[0] eq '-h' or $ARGV[0] eq 'help';
 unshift @ARGV, 'list' if $ARGV[0] =~ m(^[/@-]);
-
-my $cmd = shift;
-usage() if $cmd eq '-h' or $cmd eq 'help';
 
 my $wd = getcwd();
 my $xo = $ENV{PROJECT_TRACKER_XDG_OPEN} || "xdg-open";
 chdir($ENV{PROJECT_TRACKER_DIR} || "$ENV{HOME}/.project-tracker") or die "I can't find the project tracker data!\n";
 
+my $cmd = shift;
 die "Invalid command; run with '-h' to see usage" unless $dispatch{$cmd};
 
 # ----------------------------------------------------------------------
