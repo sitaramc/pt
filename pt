@@ -286,6 +286,9 @@ sub _sync {
     system("git pull");
     system("git push origin master");
 
+    system("git tag -f base `git reflog -99 | grep ': commit: ' | head -1 | cut -f1 -d' '`");
+    system("gitk refs/tags/base..");
+
     exit $? >> 8;
 }
 
