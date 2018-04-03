@@ -1,4 +1,4 @@
-pt - simple, distributed (git-aware) project tracker (CLI)
+# pt - simple, distributed (git-aware) project tracker (CLI)
 
 I have a somewhat distributed team, though not too large.  We don't have a lot
 to keep track of, so ethercalc has been working well enough for some time.
