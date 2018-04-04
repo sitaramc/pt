@@ -52,6 +52,18 @@ Just put this program in your `$PATH` and go.  A sample session follows.
 At the bottom of this README is a copy of the inline help text embedded within
 the script, which you get by running `pt help` or `pt -h`.
 
+## note on specifying an ID
+
+In general, you need not supply a full ID.  For convenience, you can supply a
+partial ID (the first few characters after the date should be fine; as much as
+needed to establish uniqueness).
+
+In addition, for commands in the 'Update:' category, you can also use a single
+regex (/foo or //foo; same meaning as in LIST MODE above), but the regex must
+match exactly ONE item, no more and no less.
+
+Read the "inline help text" at the end of this file for more details.
+
 # sample session
 
 ## clone
@@ -417,19 +429,20 @@ Here's the inline help, accessed by running `pt help` or `pt -h`:
     mostly free-form "log" file.  It also has zero or more "tags".  The tag
     "closed" has a special meaning (which should be obvious).
 
-    Usage:
+    Create:
         pt new <title>          # also opens an editor to take "details"
+    Query:
+        pt                      # same as 'pt list' without arguments
+        pt list                 # list all open items (i.e., same as 'pt list -closed')
+        pt list <arguments>     # see LIST MODE below
+        pt show <arguments>     # see SHOW MODE below
+        pt hist <arguments>     # see HIST MODE below
+            (the above 3 commands can be abbreviated to 'l', 's', and 'h', respectivey)
+    Update:
         pt tag <ID> <tag>       # add a tag
         pt tag <ID> -<tag>      # remove a tag (note the "-" sign)
         pt tags                 # list of all tags ever used in system (to check typos!)
         pt log <ID> <text>      # append text to the "log" file of <ID>
-
-        pt                      # same as 'pt list' without arguments
-        pt list                 # list all open items (i.e., same as 'pt list -closed')
-        pt list <arguments>             # see LIST MODE below
-        pt show <ID|search terms>       # see SHOW MODE below
-        pt hist <ID|search terms>       # see HIST MODE below
-            (the above 3 commands can be abbreviated to 'l', 's', and 'h', respectivey)
 
         pt attach <ID> <file>   # attach a file to item
         pt files <ID>           # list files attached to an item
@@ -439,12 +452,9 @@ Here's the inline help, accessed by running `pt help` or `pt -h`:
         pt close <ID>           # adds the "closed" tag
         pt edit <ID>            # opens editor on title, details, and log files
                                 #   !! USE WITH CARE !!
-
+    Git:
         pt sync                 # add and commit local changes, pull, and push
         pt git <arguments>      # run any git command
-
-    NOTE on <ID>: You need not supply the full ID; just the first few characters
-    after the date should be fine (as much as is needed to establish uniqueness)
 
     LIST MODE
 
@@ -488,5 +498,15 @@ Here's the inline help, accessed by running `pt help` or `pt -h`:
         (YYYY-MM-DD); in effect, this is an event log for the item.
 
     -   History mode search terms have the same rules as SHOW MODE above
+
+    SPECIFYING AN ID
+
+    -   You need not supply a full ID.  For convenience, you can supply a partial
+        ID (the first few characters after the date should be fine; as much as
+        needed to establish uniqueness).
+
+    -   In addition, for commands in the 'Update:' category, you can also use a
+        single regex (/foo or //foo; same meaning as in LIST MODE above), but the
+        regex must match exactly ONE item, no more and no less.
 
 

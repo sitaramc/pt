@@ -71,8 +71,8 @@ sub _git {
 }
 
 sub _tag {
-    die "this command needs an ID\n" unless @_;
-    my ($id, $dir) = id_dir(+shift());
+    die "this command needs a single ID or something to search on\n" unless @_;
+    my ($id, $dir) = id_dir( get_1_id(+shift()) );
 
     while (@_) {
         my $tag = shift;
@@ -92,8 +92,9 @@ sub _tags {
 }
 
 sub _log {
-    die "this command needs an ID\n" unless @_;
-    my ($id, $dir) = id_dir(+shift());
+    die "this command needs a single ID or something to search on\n" unless @_;
+    my ($id, $dir) = id_dir( get_1_id(+shift()) );
+
     die "'log' needs some text to log!\n" unless @_;
     dated_print("$dir/log", join(" ", "($ENV{USER})", @_));
 }
@@ -112,7 +113,23 @@ sub _list {
     }
 }
 
+sub get_1_id {
+    my $id = shift;
+    # if input is not a regex, return it as is
+    return $id unless $id =~ m(^/);
+
+    # if input is a regex, find matching IDs, but it should only match ONE item
+    my @IDs = get_IDs($id);
+    die "no item matches '$id'\n" if @IDs == 0;
+    die "more than one item matches '$id'\n" if @IDs > 1;
+
+    return $IDs[0];
+}
+
 sub get_IDs {
+    # input: see help for LIST MODE to see what the input could be
+    # output: a list of IDs that matched
+
     my %set;
     push @_, '-closed' unless grep { $_ eq 'closed' } @_;
 
@@ -232,8 +249,8 @@ sub _history {
 }
 
 sub _attach {
-    die "this command needs an ID\n" unless @_;
-    my ($id, $dir) = id_dir(+shift());
+    die "this command needs a single ID or something to search on\n" unless @_;
+    my ($id, $dir) = id_dir( get_1_id(+shift()) );
 
     my $file = shift;
     $file = "$wd/$file" unless $file =~ m(^/);
@@ -246,14 +263,14 @@ sub _attach {
 
 sub _files {
     # TODO: find ALL files in system if no ID given
-    die "this command needs an ID\n" unless @_;
-    my ($id, $dir) = id_dir(+shift());
+    die "this command needs a single ID or something to search on\n" unless @_;
+    my ($id, $dir) = id_dir( get_1_id(+shift()) );
     system("ls -1 $dir/files");
 }
 
 sub _fopen {
-    die "this command needs an ID\n" unless @_;
-    my ($id, $dir) = id_dir(+shift());
+    die "this command needs a single ID or something to search on\n" unless @_;
+    my ($id, $dir) = id_dir( get_1_id(+shift()) );
 
     my $pfn = shift;   # could be partial file name
     my @files = glob("$dir/files/*$pfn*");
@@ -267,15 +284,15 @@ sub _fopen {
 }
 
 sub _close {
-    die "this command needs an ID\n" unless @_;
-    my ($id, $dir) = id_dir(+shift());
+    die "this command needs a single ID or something to search on\n" unless @_;
+    my ($id, $dir) = id_dir( get_1_id(+shift()) );
 
     _tag($id, "closed");
 }
 
 sub _edit {
-    die "this command needs an ID\n" unless @_;
-    my ($id, $dir) = id_dir(+shift());
+    die "this command needs a single ID or something to search on\n" unless @_;
+    my ($id, $dir) = id_dir( get_1_id(+shift()) );
 
     _editor(map { "$dir/$_" } qw(title details log));
 }
@@ -407,19 +424,20 @@ to call it) has a 1-line "title" file, a free-form "details" file, and a
 mostly free-form "log" file.  It also has zero or more "tags".  The tag
 "closed" has a special meaning (which should be obvious).
 
-Usage:
+Create:
     pt new <title>          # also opens an editor to take "details"
+Query:
+    pt                      # same as 'pt list' without arguments
+    pt list                 # list all open items (i.e., same as 'pt list -closed')
+    pt list <arguments>     # see LIST MODE below
+    pt show <arguments>     # see SHOW MODE below
+    pt hist <arguments>     # see HIST MODE below
+        (the above 3 commands can be abbreviated to 'l', 's', and 'h', respectivey)
+Update:
     pt tag <ID> <tag>       # add a tag
     pt tag <ID> -<tag>      # remove a tag (note the "-" sign)
     pt tags                 # list of all tags ever used in system (to check typos!)
     pt log <ID> <text>      # append text to the "log" file of <ID>
-
-    pt                      # same as 'pt list' without arguments
-    pt list                 # list all open items (i.e., same as 'pt list -closed')
-    pt list <arguments>             # see LIST MODE below
-    pt show <ID|search terms>       # see SHOW MODE below
-    pt hist <ID|search terms>       # see HIST MODE below
-        (the above 3 commands can be abbreviated to 'l', 's', and 'h', respectivey)
 
     pt attach <ID> <file>   # attach a file to item
     pt files <ID>           # list files attached to an item
@@ -429,12 +447,9 @@ Usage:
     pt close <ID>           # adds the "closed" tag
     pt edit <ID>            # opens editor on title, details, and log files
                             #   !! USE WITH CARE !!
-
+Git:
     pt sync                 # add and commit local changes, pull, and push
     pt git <arguments>      # run any git command
-
-NOTE on <ID>: You need not supply the full ID; just the first few characters
-after the date should be fine (as much as is needed to establish uniqueness)
 
 LIST MODE
 
@@ -478,4 +493,14 @@ HIST MODE
     (YYYY-MM-DD); in effect, this is an event log for the item.
 
 -   History mode search terms have the same rules as SHOW MODE above
+
+SPECIFYING AN ID
+
+-   You need not supply a full ID.  For convenience, you can supply a partial
+    ID (the first few characters after the date should be fine; as much as
+    needed to establish uniqueness).
+
+-   In addition, for commands in the 'Update:' category, you can also use a
+    single regex (/foo or //foo; same meaning as in LIST MODE above), but the
+    regex must match exactly ONE item, no more and no less.
 
