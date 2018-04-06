@@ -253,6 +253,17 @@ Let's add an event to the other issue:
 
     $ pt log 0d logging something here
 
+### log more than just one line
+
+The syntax in the previous section allows you to add a logline quickly.  But
+if you want to add, say, some free form text (maybe some details), you need to
+open an editor.  Of course, you can always use the `edit` command (described
+later), but running
+
+    $ pt log 0d
+    # opens up an editor on the log file, with date and username prefilled on
+    # the last line
+
 ## check the history
 
 **NOTE**: the `history` command can be abbreviated as `h` for convenience.
@@ -443,6 +454,8 @@ Here's the inline help, accessed by running `pt help` or `pt -h`:
         pt tag <ID> -<tag>      # remove a tag (note the "-" sign)
         pt tags                 # list of all tags ever used in system (to check typos!)
         pt log <ID> <text>      # append text to the "log" file of <ID>
+        pt log <ID>             # open an editor on the log file, with date and
+                                # userid pre-filled on the last line
 
         pt attach <ID> <file>   # attach a file to item
         pt files <ID>           # list files attached to an item

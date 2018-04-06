@@ -95,8 +95,8 @@ sub _log {
     die "this command needs a single ID or something to search on\n" unless @_;
     my ($id, $dir) = id_dir( get_1_id(+shift()) );
 
-    die "'log' needs some text to log!\n" unless @_;
-    dated_print("$dir/log", join(" ", "($ENV{USER})", @_));
+    dated_print("$dir/log", join(" ", "($ENV{USER})", @_) . "\n");
+    _editor("$dir/log") unless @_;
 }
 
 sub _list {
@@ -363,7 +363,7 @@ sub _editor {
 sub dated_print {
     my ($file, $text) = @_;
     my $old = ''; $old = slurp($file) if -f $file;
-    _print($file, $old . Ymd() . "\t$text\n");
+    _print($file, $old . Ymd() . "\t$text");
 }
 
 sub _open {
@@ -411,12 +411,6 @@ sub start_pager {
     open(STDOUT, "|-", $ENV{PAGER} || "less");
 }
 
-=for notes
-    NOT YET IMPLEMENTED:
-    pt log tag              # chronological log of all items containing tag
-    pt log /regex           # same, but for items where title matches regex
-=cut
-
 __DATA__
 
 Simple git-aware project tracker.  Each item (issue, note, whatever you want
@@ -438,6 +432,8 @@ Update:
     pt tag <ID> -<tag>      # remove a tag (note the "-" sign)
     pt tags                 # list of all tags ever used in system (to check typos!)
     pt log <ID> <text>      # append text to the "log" file of <ID>
+    pt log <ID>             # open an editor on the log file, with date and
+                            # userid pre-filled on the last line
 
     pt attach <ID> <file>   # attach a file to item
     pt files <ID>           # list files attached to an item
