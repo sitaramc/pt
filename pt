@@ -28,7 +28,6 @@ my %dispatch = (
     attach  =>  \&_attach,
     files   =>  \&_files,
     open    =>  \&_fopen,
-    close   =>  \&_close,
     edit    =>  \&_edit,
     sync    =>  \&_sync,
 );
@@ -281,13 +280,6 @@ sub _fopen {
     die "you have '$file' in your current directory; will not overwrite, sorry!\n" if -f "$wd/$file";
     system("cp '$dir/files/$file' '$wd'");
     system($xo, "$wd/$file");
-}
-
-sub _close {
-    die "this command needs a single ID or something to search on\n" unless @_;
-    my ($id, $dir) = id_dir( get_1_id(+shift()) );
-
-    _tag($id, "closed");
 }
 
 sub _edit {
