@@ -130,7 +130,13 @@ sub get_IDs {
     # output: a list of IDs that matched
 
     my %set;
-    push @_, '-closed' unless grep { $_ eq 'closed' } @_;
+    if ( grep { $_ eq '-a' } @_ ) {
+        @_ = grep { $_ ne '-a' } @_;
+    } else {
+        # we don't want closed/hidden items unless explicitly asked
+        push @_, '-closed' unless grep { $_ eq 'closed' } @_;
+        push @_, '-hidden' unless grep { $_ eq 'hidden' } @_;
+    }
 
     # seed the set with ALL items
     map {
