@@ -421,14 +421,14 @@ __DATA__
 
 Simple git-aware project tracker.  Each item (issue, note, whatever you want
 to call it) has a 1-line "title" file, a free-form "details" file, and a
-mostly free-form "log" file.  It also has zero or more "tags".  The tag
-"closed" has a special meaning (which should be obvious).
+mostly free-form "log" file.  It also has zero or more "tags".  The tags
+"closed" and "hidden" are treated specially.
 
 Create:
     pt new <title>          # also opens an editor to take "details"
 Query:
     pt                      # same as 'pt list' without arguments
-    pt list                 # list all open items (i.e., same as 'pt list -closed')
+    pt list                 # list all open items (i.e., same as 'pt list -closed -hidden')
     pt list <arguments>     # see LIST MODE below
     pt show <arguments>     # see SHOW MODE below
     pt hist <arguments>     # see HIST MODE below
@@ -446,7 +446,6 @@ Update:
     pt open <ID> <file>     # get file from item to current directory and open it
                             # (partial filenames are OK, but should be unique)
 
-    pt close <ID>           # adds the "closed" tag
     pt edit <ID>            # opens editor on title, details, and log files
                             #   !! USE WITH CARE !!
 Git:
@@ -462,8 +461,7 @@ LIST MODE
     The list of tags field also has a number in brackets, like [2], showing
     the number of files attached to that item, if any.
 
--   List mode with arguments has the following variants.  In all cases, unless
-    the tag "closed" is supplied, only open items are listed.
+-   List mode with arguments has the following variants.
 
     pt list /regex          # list items where regex matches in title
     pt list //regex         # same, but match in title, details, or log
@@ -478,6 +476,11 @@ LIST MODE
     example, '/foo -//bar tag1 -tag2' lists items matching foo in the title,
     and *not* matching bar in the title, details, or log, and which contain
     tag1 and do not contain tag2.
+
+-   In all cases, unless the tag "closed" is supplied, a criterion of
+    "-closed" (i.e., NOT closed) is added to the search, and similarly for the
+    tag "hidden" as well.  **However**, a criterion of "-a" prevents both
+    these additions.
 
 SHOW MODE
 
