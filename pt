@@ -5,6 +5,7 @@ use 5.10.0;
 use IPC::Cmd qw[can_run run run_forked];
 use File::Path qw(make_path);
 use Data::Dumper;
+use Time::Piece;
 use Cwd;
 
 # use Time::HiRes qw(sleep);
@@ -247,6 +248,7 @@ sub _history {
         if (-f "$dir/log") {
             my $l = slurp("$dir/log");
             $l =~ s/^(?!\d\d\d\d-.*\n).*\n//mg;
+            $l =~ s/^(\d\d\d\d-\d\d-\d\d)/diffdays($1)/gem if slurp("$dir/title") =~ /todo/i;
             print $l;
         }
         print "\n";
@@ -390,6 +392,12 @@ sub Ymd {
     my ( $s, $m, $h, $D, $M, $Y ) = localtime();
     # return sprintf "%04d-%02d-%02d %02d:%02d:%02d", 1900 + $Y, 1 + $M, $D, $h, $m, $s;
     return sprintf "%04d-%02d-%02d", 1900 + $Y, 1 + $M, $D;
+}
+
+sub diffdays {
+    my $day = Time::Piece->strptime(+shift(), "%Y-%m-%d");
+    my $now = Time::Piece->strptime(Ymd(), "%Y-%m-%d");
+    return sprintf("%10d", ($day - $now) / 3600 / 24);
 }
 
 # ----------------------------------------------------------------------
