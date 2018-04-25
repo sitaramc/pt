@@ -103,7 +103,7 @@ sub _list {
     my @IDs = get_IDs(@_);
 
     start_pager();
-    for my $id (sort @IDs) {
+    for my $id (@IDs) {
         my $dir;
         ($id, $dir) = id_dir($id);
         my $taglist = join(", ", map { s(.*/)(); $_ } sort glob("$dir/tags/*"));
@@ -176,8 +176,20 @@ sub get_IDs {
         }
     }
 
-    my @IDs = sort grep { $set{$_} } keys %set;
+    my @IDs = sort { _title($a) cmp _title($b) } grep { $set{$_} } keys %set;
     return @IDs;
+}
+{
+    my %title;
+    sub _title {
+        my $id = shift;
+        unless ($title{$id}) {
+            my $dir;
+            ($id, $dir) = id_dir($id);
+            $title{$id} = slurp("$dir/title");
+        }
+        return $title{$id};
+    }
 }
 
 sub grep_IDs {
@@ -204,7 +216,7 @@ sub _show {
         @IDs = @_;
     }
 
-    for my $id (sort @IDs) {
+    for my $id (@IDs) {
         my $dir;
         ($id, $dir) = id_dir($id);
 
@@ -237,7 +249,7 @@ sub _history {
         @IDs = @_;
     }
 
-    for my $id (sort @IDs) {
+    for my $id (@IDs) {
         my $dir;
         ($id, $dir) = id_dir($id);
 
