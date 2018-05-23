@@ -95,7 +95,7 @@ sub _log {
     die "this command needs a single ID or something to search on\n" unless @_;
     my ($id, $dir) = id_dir( get_1_id(+shift()) );
 
-    dated_print("$dir/log", join(" ", "($ENV{USER})", @_) . "\n");
+    dated_print("$dir/log", join(" ", @_) . "\n");
     _editor("$dir/log") unless @_;
 }
 
