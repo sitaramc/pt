@@ -96,7 +96,7 @@ sub _log {
     my ($id, $dir) = id_dir( get_1_id(+shift()) );
 
     dated_print("$dir/log", join(" ", @_) . "\n");
-    _editor("$dir/log") unless @_;
+    _editor("$dir/log", "-c", '$', '-c', 'startinsert!') unless @_;
 }
 
 sub _list {
@@ -375,7 +375,7 @@ sub _editor {
 sub dated_print {
     my ($file, $text) = @_;
     my $old = ''; $old = slurp($file) if -f $file;
-    _print($file, $old . Ymd() . "\t$text");
+    _print($file, $old . "\n" . Ymd() . "\t$text");
 }
 
 sub _open {
